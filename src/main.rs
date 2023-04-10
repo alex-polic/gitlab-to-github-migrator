@@ -8,18 +8,12 @@
 
 // list repos from gitlab
 mod structs;
-use std::str::FromStr;
+mod http_client;
+mod command_helper;
+use std::{str::FromStr, process::Command};
 
-use crate::structs::RepoRequest;
+use crate::{structs::RepoRequest};
 
-fn main() {
-
-    let repo_req = RepoRequest::new(
-        String::from_str("test-repo").unwrap(),
-        String::from_str("Testing sserialization").unwrap()
-    );
-    let txt = serde_json::to_string(&repo_req).unwrap();
-
-    println!("{txt}");
-    println!("{:?}", repo_req);
+#[tokio::main]
+async fn main() {
 }
