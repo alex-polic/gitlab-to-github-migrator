@@ -1,14 +1,13 @@
-// TO DO: Create empty repo in Github
-// pull repo from gitlab
-// cd to repo
-// git remote set-url github git@gitlab.com:marbleit/Zoocentar.git
-// git push --mirror github
-// cd backwards
-// remove repo
+// TO DO:
+// 
+// 
+// 
+//
 
 // list repos from gitlab
 // allow changing of primary branch
 // implement support for subgroups
+// Implement helper for repo name to repo path (Proj name to proj-name)
 
 mod structs;
 mod http_client;
@@ -17,12 +16,21 @@ mod helpers;
 use std::{str::FromStr};
 
 use command_helper::{set_new_remote, push_new_remote, delete_local_repo, clone_repo, add_new_remote};
-use http_client::{create_repo, set_default_branch_to_develop};
+use http_client::{create_repo, set_default_branch_to_develop, list_gitlab_repos};
 use structs::RepoRequest;
 
 #[tokio::main]
 async fn main() {
-    migrator_template().await;
+    //migrator_template().await;
+    match list_gitlab_repos(5250038).await {
+        Ok(res) => {
+            for repo in &res {
+                println!("{}", repo)
+            }
+            println!("{}", res.len())
+        }
+        Err(err) => println!("{:?}", err.status)
+    };
 }
 
 async fn migrator_template() {

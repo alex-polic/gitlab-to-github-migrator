@@ -1,9 +1,13 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::{HashMap, VecDeque}, str::FromStr};
 
 use reqwest::{Error, Response};
 use serde::de::DeserializeOwned;
 
-use crate::{structs::{RepoRequest, HttpError}, helpers::format_github_api_url};
+use crate::{structs::{RepoRequest, HttpError, GitlabRepo}, helpers::{format_github_api_url, format_gitlab_api_url, create_params}};
+
+//
+// Github API calls section
+//
 
 pub async fn create_repo(request: &RepoRequest) -> Result<String, HttpError> {
     let client = reqwest::Client::new();
@@ -93,4 +97,95 @@ async fn _handle_respnose<T: DeserializeOwned>(res: Result<Response, Error>) -> 
         error => 
             return Err(HttpError::new(error, res_json.text().await.unwrap()))
     };
+}
+
+//
+// Gitlab API calls section
+//
+
+pub async fn list_gitlab_repos(groupId: i32) -> Result<Vec<GitlabRepo>, HttpError>  {
+    let client = reqwest::Client::new();
+
+    let mut url = format_gitlab_api_url(format!("groups/{0}/projects", groupId).as_str());
+
+    let mut params = HashMap::new();
+    params.insert("private_token", "glpat-5z27nRsegM4TX5UJe1zN");
+    params.insert("pagination", "keyset");
+    params.insert("per_page", "50");
+    params.insert("order_by", "id");
+    params.insert("sort", "asc");
+    params.insert("page", "1");
+
+    let params = create_params(params);
+    
+    url.push_str(&params);
+
+    let res = client.get(url)
+        .send()
+        .await;
+
+    let res_json = match res {
+        Ok(res) => res,
+        Err(_) => 
+            return Err(HttpError::new(
+                reqwest::StatusCode::INTERNAL_SERVER_ERROR, 
+                String::from_str("Something went wrong").unwrap()
+            ))
+    };
+    let mut repos: Vec<GitlabRepo> = Vec::new();
+
+    let pages_header = res_json.headers().get("X-Total-Pages").unwrap().to_str().unwrap();
+    let pages_header = i32::from_str(pages_header).unwrap() + 1;
+
+    match res_json.status() {
+        reqwest::StatusCode::OK => {
+            let mut repos_from_page = res_json.json::<Vec<GitlabRepo>>().await.unwrap();
+            repos.append(&mut repos_from_page);
+        },
+        error => 
+            return Err(HttpError::new(error, res_json.text().await.unwrap()))
+    };
+
+    for i in 2..pages_header {
+        let mut url = format_gitlab_api_url(format!("groups/{0}/projects", groupId).as_str());
+        
+        let page_as_str = i.to_string();
+
+        let mut params = HashMap::new();
+        params.insert("private_token", "glpat-5z27nRsegM4TX5UJe1zN");
+        params.insert("pagination", "keyset");
+        params.insert("per_page", "50");
+        params.insert("order_by", "id");
+        params.insert("sort", "asc");
+        params.insert("page", page_as_str.as_str());
+
+        let params = create_params(params);
+        
+        url.push_str(&params);
+
+        let res = client.get(url)
+            .send()
+            .await;
+
+        let res_json = match res {
+            Ok(res) => res,
+            Err(_) => 
+                return Err(HttpError::new(
+                    reqwest::StatusCode::INTERNAL_SERVER_ERROR, 
+                    String::from_str("Something went wrong").unwrap()
+                ))
+        };
+
+        match res_json.status() {
+            reqwest::StatusCode::OK => {
+                let mut repos_from_page = res_json.json::<Vec<GitlabRepo>>().await.unwrap();
+                repos.append(&mut repos_from_page);
+            },
+            error => 
+                return Err(HttpError::new(error, res_json.text().await.unwrap()))
+        };
+    }
+
+    return Ok(repos);
+    
 }
