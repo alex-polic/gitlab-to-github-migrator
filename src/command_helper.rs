@@ -1,8 +1,8 @@
 use std::{process::Command};
 
-pub fn clone_repo(repo_name: &String) {
+pub fn clone_repo(repo_path: &String) {
 
-    let git_repo = format!("git@gitlab.com:marbleit/{0}.git", repo_name.as_str());
+    let git_repo = format!("git@gitlab.com:marbleit/tbuddi-applications/{0}.git", repo_path.as_str());
 
     let process_status = Command::new("git")
         .current_dir("./")

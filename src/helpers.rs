@@ -1,7 +1,7 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap};
 
-const GITHUB_BASE_API: &str = "https://api.github.com/";
-const GITLAB_BASE_API: &str = "https://gitlab.com/api/v4/";
+const GITHUB_BASE_API: &str = "https://api.github.com";
+const GITLAB_BASE_API: &str = "https://gitlab.com/api/v4";
 
 pub fn format_github_api_url(endpoint: &str) -> String {
     return format!("{0}/{1}", GITHUB_BASE_API, endpoint)

@@ -1,16 +1,18 @@
-use std::fmt;
+use std::{fmt};
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RepoRequest {
     pub name: String,
-    pub description: String
+    pub description: String,
+    pub default_branch: String,
+    pub path: String
 }
 
 impl RepoRequest {
-    pub fn new(name: String, description: String) -> RepoRequest {
-       return RepoRequest { name, description };
+    pub fn new(name: String, description: String, default_branch: String, path: String) -> RepoRequest {
+       return RepoRequest { name, description, default_branch, path };
     }
 }
 
@@ -33,11 +35,6 @@ pub struct GitlabRepo {
     pub default_branch: String
 }
 
-impl GitlabRepo {
-    pub fn new(name: String, description: Option<String>, path: String, default_branch: String) -> GitlabRepo {
-        return GitlabRepo { name, description, path, default_branch };
-    }
-}
 impl fmt::Display for GitlabRepo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})\n", self.name, self.path)

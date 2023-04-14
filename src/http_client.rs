@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, VecDeque}, str::FromStr};
+use std::{collections::{HashMap}, str::FromStr};
 
 use reqwest::{Error, Response};
 use serde::de::DeserializeOwned;
@@ -12,17 +12,17 @@ use crate::{structs::{RepoRequest, HttpError, GitlabRepo}, helpers::{format_gith
 pub async fn create_repo(request: &RepoRequest) -> Result<String, HttpError> {
     let client = reqwest::Client::new();
 
-    let mut body_map = HashMap::new();
-    body_map.insert("name", request.name.clone());
-    body_map.insert("description", request.description.clone());
-    body_map.insert("private", String::from_str("true").unwrap());
+    let mut body_map: HashMap<&str, &str> = HashMap::new();
+    body_map.insert("name", &request.path);
+    body_map.insert("description", &request.description);
+    body_map.insert("private", "true");
 
     let url = format_github_api_url("orgs/MarbleIT/repos");
 
     let res = client.post(url)
         .header("Accept", "application/vnd.github+json")
         .header("User-Agent", "rust-migrator")
-        .bearer_auth("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")
+        .bearer_auth("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")
         .json(&body_map)
         .send()
         .await;
@@ -48,19 +48,19 @@ pub async fn create_repo(request: &RepoRequest) -> Result<String, HttpError> {
 
 }
 
-pub async fn set_default_branch_to_develop(request: &RepoRequest) -> Result<String, HttpError>  {
+pub async fn set_default_branch(request: &RepoRequest) -> Result<String, HttpError>  {
     let client = reqwest::Client::new();
 
     let mut body_map = HashMap::new();
-    body_map.insert("name", request.name.clone());
-    body_map.insert("default_branch", String::from_str("develop").unwrap());
+    body_map.insert("name", request.path.clone());
+    body_map.insert("default_branch", request.default_branch.clone());
 
     let url = format_github_api_url(format!("repos/MarbleIT/{0}", body_map["name"]).as_str());
 
     let res = client.patch(url)
         .header("Accept", "application/vnd.github+json")
         .header("User-Agent", "rust-migrator")
-        .bearer_auth("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")
+        .bearer_auth("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")
         .json(&body_map)
         .send()
         .await;
@@ -103,10 +103,10 @@ async fn _handle_respnose<T: DeserializeOwned>(res: Result<Response, Error>) -> 
 // Gitlab API calls section
 //
 
-pub async fn list_gitlab_repos(groupId: i32) -> Result<Vec<GitlabRepo>, HttpError>  {
+pub async fn list_gitlab_repos(group_id: i32) -> Result<Vec<GitlabRepo>, HttpError>  {
     let client = reqwest::Client::new();
 
-    let mut url = format_gitlab_api_url(format!("groups/{0}/projects", groupId).as_str());
+    let mut url = format_gitlab_api_url(format!("groups/{0}/projects", group_id).as_str());
 
     let mut params = HashMap::new();
     params.insert("private_token", "glpat-5z27nRsegM4TX5UJe1zN");
@@ -147,7 +147,7 @@ pub async fn list_gitlab_repos(groupId: i32) -> Result<Vec<GitlabRepo>, HttpErro
     };
 
     for i in 2..pages_header {
-        let mut url = format_gitlab_api_url(format!("groups/{0}/projects", groupId).as_str());
+        let mut url = format_gitlab_api_url(format!("groups/{0}/projects", group_id).as_str());
         
         let page_as_str = i.to_string();
 
